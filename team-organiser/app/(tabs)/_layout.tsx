@@ -17,9 +17,9 @@ export default function TabLayout() {
         }}
         >
             <Tabs.Screen 
-                name="index" 
+                name="RegisterScreen" 
                 options= {{
-                    title: 'Home',
+                    title: 'Register',
                     tabBarIcon: ({color, focused }) => (
                         <Ionicons name={focused ? 'home-sharp' : 'home-outline'} color={color} size={24} />
                     ),
@@ -33,6 +33,12 @@ export default function TabLayout() {
                         <Ionicons name={focused ? 'information-circle' : 'information-circle-outline'} color={color} size={24} />
                     ),
                 }} 
+            />
+            <Tabs.Screen
+                name="organisations"
+                options = {{
+                    title: "Organisations",
+                }}
             />
         </Tabs>
     )
