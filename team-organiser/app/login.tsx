@@ -16,17 +16,34 @@ export default function login() {
 
     async function handleLogin() {
         setLoading(true)
-        try {
-            signInWithEmailAndPassword(auth, email, password)
-            console.log("Signed in")
-            router.replace("/(tabs)/organisations");
-        } catch (error) {
-            if (error instanceof Error) {
-                setErrorMessage(error.message);
-            } else {
-                setErrorMessage("Unknown error");
-            }
-        }
+            signInWithEmailAndPassword(auth, email, password).then(() => {
+                console.log("Signed in")
+                router.replace("/(tabs)/organisations");
+            }).catch((error) => {
+                if (error instanceof FirebaseError) {
+                    console.log(error.code)
+                    switch (error.code) {
+                        case "auth/invalid-credential":
+                            setErrorMessage("Invalid email or password");
+                            break;
+                        case "auth/missing-password":
+                            setErrorMessage("Invalid password entry");
+                            break;
+                        case "auth/invalid-email":
+                            setErrorMessage("Please enter a valid email")
+                            break;
+                        default:
+                            setErrorMessage("Error when logging in");
+                            break;
+
+                    }
+                } else if (error instanceof Error) {
+                    setErrorMessage(error.message);
+                } else {
+                    setErrorMessage("Unknown error");
+                }
+            })
+
         setLoading(false);
     } 
 
