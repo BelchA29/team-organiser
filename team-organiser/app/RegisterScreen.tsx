@@ -1,9 +1,9 @@
 import React from 'react';
 import { TextInput, View, Button, Alert, Text } from 'react-native';
-import { getAuth, createUserWithEmailAndPassword, User } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from 'expo-router';
-import { FirebaseError, initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc } from 'firebase/firestore'
+import { FirebaseError } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore'
 
 import {styles} from './styles/global'
 
