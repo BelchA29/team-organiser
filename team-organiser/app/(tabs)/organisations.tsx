@@ -1,13 +1,16 @@
 import React from 'react'
 import { useRouter } from 'expo-router';
-import { View, Text, Button, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, Button, FlatList, TouchableOpacity, Modal } from 'react-native';
 import {styles} from '../styles/global';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, getDocs, query, where, collection } from 'firebase/firestore'
+import { TextInput } from 'react-native-gesture-handler';
 
 function organisations() {
     const [organisations, setOrganisations] = React.useState<Organisation[]>();
-    const [loading, setLoading] = React.useState(false)
+    const [loading, setLoading] = React.useState(false);
+    const [visible, setVisible] = React.useState(false);
+    const [joinCode, setJoinCode] = React.useState("");
     const router = useRouter();
 
     React.useEffect(() => {
@@ -41,6 +44,10 @@ function organisations() {
         }
     }
 
+    function handleJoin() {
+        setVisible(false);
+    }
+
     if (loading) {
         return (
             <View style={styles.container}>
@@ -54,7 +61,22 @@ function organisations() {
                 <View style={styles.container}>
                     <Text>Organisations</Text>
                     <Button title="Create Organisation" onPress={() => router.push("/(tabs)/CreateOrganisationScreen")}/>
-                    <Button title="Join Organisation" />
+                    <Button title="Join Organisation" onPress={() => setVisible(true)}/>
+                    <Modal
+                        visible={visible}
+                        animationType="slide"
+                        transparent={true}
+                        onRequestClose={() => setVisible(false)}
+                    >
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.modalContent}>
+                                <Text>Join</Text>
+                                <TextInput style={styles.textInput} onChangeText={setJoinCode} value={joinCode} placeholder='Club Name' />
+                                <Button title="Join" onPress={handleJoin} />
+                                <Button title="Close" onPress={() => setVisible(false)} />
+                            </View>
+                        </View>
+                    </Modal>
                     <FlatList data={organisations} style={styles.itemList}
                     renderItem={({item}) => 
                         <View style={styles.item}>
