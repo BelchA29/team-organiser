@@ -2,7 +2,7 @@ import React from 'react';
 import {useRouter} from "expo-router";
 import { TextInput, View, StyleSheet, Button, Alert, Text } from 'react-native';
 import { getAuth } from "firebase/auth";
-import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore'
+import { getFirestore, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore'
 
 import {styles} from "../styles/global";
 
@@ -16,19 +16,14 @@ function CreateOrganisationScreen() {
         const user = auth.currentUser;
         if (!user) return;
         let data: UserDetails;
-        const userDocRef = doc(db, 'users', user.uid)
+        const orgDocRef = doc(db, 'organisations', orgName)
         try {
-            const userDocs = await getDoc(userDocRef);
-            data = userDocs.data() as UserDetails;
-            if (data.defaultOrganisation === null) {
-                data.defaultOrganisation = 0;
-            }
-            const newOrg: Organisation = {name: orgName, teams:[], creator: user.uid}
-            data.organisations.push(newOrg)
-            await updateDoc(userDocRef, {
-                defaultOrganisation: data.defaultOrganisation,
-                organisations: data.organisations
-            });
+            const orgDocs = setDoc(orgDocRef, {
+                name: orgName,
+                creator: user.uid,
+                teams: [],
+                users: [user.uid],
+            }, {merge: true});
             console.log("Organisation added")
         } catch (error) {
             console.error(error);

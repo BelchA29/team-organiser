@@ -1,5 +1,6 @@
 type Organisation = {
     name: string,
     teams: Team[],
-    creator: string;
+    creator: string,
+    users: string[],
 }

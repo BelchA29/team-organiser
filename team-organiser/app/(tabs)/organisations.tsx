@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { View, Text, Button, FlatList } from 'react-native';
 import {styles} from '../styles/global';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDoc } from 'firebase/firestore'
+import { getFirestore, doc, getDocs, query, where, collection } from 'firebase/firestore'
 
 function organisations() {
     const [organisations, setOrganisations] = React.useState<Organisation[]>();
@@ -21,11 +21,17 @@ function organisations() {
             router.replace('/(tabs)/RegisterScreen');
             return;
         }
-        const userDocRef = doc(db, 'users', currentUser.uid)
+        const orgDocRef = collection(db, 'organisations')
+        const q = query(orgDocRef, where("users", "array-contains", currentUser.uid));
         try {
-            const userDocs = await getDoc(userDocRef);
-            const data = userDocs.data() as UserDetails;
-            setOrganisations(data.organisations);
+            const userOrgs = await getDocs(q);
+            const orgs: Organisation[] = [];
+            userOrgs.forEach((org) => {
+                const orgData = org.data() as Omit<Organisation, 'id'>;
+                orgs.push(orgData);
+            })
+            console.log(orgs)
+            setOrganisations(orgs)
         } catch (error) {
             console.error(error);
         }

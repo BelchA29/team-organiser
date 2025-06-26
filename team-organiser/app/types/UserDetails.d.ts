@@ -1,4 +1,4 @@
 type UserDetails = {
     defaultOrganisation: number | null,
-    organisations: Organisation[],
+    organisations: string[],
 }

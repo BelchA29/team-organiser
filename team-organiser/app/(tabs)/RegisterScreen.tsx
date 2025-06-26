@@ -17,27 +17,6 @@ function RegisterScreen() {
 
     const db = getFirestore();
 
-    const createUserDetails = async (user: User) => {
-        if (!user) return;
-
-        const userDocRef = doc(db, 'users', user.uid)
-
-        try {
-            await setDoc(userDocRef, {
-                defaultOrganisation: null,
-                organisations: []
-            }, {merge:true});
-            console.log("Profile added to firestore")
-        } catch (error: unknown) {
-            if (error instanceof Error) {
-                console.log("Error Creating user details: ", error.message)
-            }
-            setErrorFlag(true)
-            setErrorMessage("Cannot create user details")
-            console.error("Error creating user profile")
-        }
-    }
-
     const handleRegister = async () => {
         setLoading(true);
 
@@ -46,7 +25,6 @@ function RegisterScreen() {
             const userCredentials = await createUserWithEmailAndPassword(auth, email, password);
 
             const user = userCredentials.user;
-            createUserDetails(user);
             console.log("User registreed: ", user.email);
             Alert.alert("Success", `Welcome, ${user.email}`);
             router.push('/(tabs)/about');
