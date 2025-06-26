@@ -25,6 +25,7 @@ function CreateOrganisationScreen() {
                 users: [user.uid],
             }, {merge: true});
             console.log("Organisation added")
+            router.replace("/(tabs)/organisations")
         } catch (error) {
             console.error(error);
         }

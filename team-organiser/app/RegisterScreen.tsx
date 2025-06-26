@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { FirebaseError, initializeApp } from 'firebase/app';
 import { getFirestore, doc, setDoc } from 'firebase/firestore'
 
-import {styles} from '../styles/global'
+import {styles} from './styles/global'
 
 function RegisterScreen() {
     const [email, setEmail] = React.useState('');
@@ -27,7 +27,7 @@ function RegisterScreen() {
             const user = userCredentials.user;
             console.log("User registreed: ", user.email);
             Alert.alert("Success", `Welcome, ${user.email}`);
-            router.push('/(tabs)/about');
+            router.replace('/(tabs)/organisations');
         } catch (error: unknown) {
             if (error instanceof FirebaseError) {
                 console.error("Registration error: ", error.code, error.message)

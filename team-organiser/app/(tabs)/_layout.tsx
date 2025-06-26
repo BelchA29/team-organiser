@@ -16,28 +16,32 @@ export default function TabLayout() {
              },
         }}
         >
-            <Tabs.Screen 
-                name="RegisterScreen" 
-                options= {{
-                    title: 'Register',
-                    tabBarIcon: ({color, focused }) => (
-                        <Ionicons name={focused ? 'home-sharp' : 'home-outline'} color={color} size={24} />
-                    ),
-                }} 
-            />
-            <Tabs.Screen 
-                name="about" 
-                options= {{
-                    title: 'About',
-                    tabBarIcon: ({color, focused }) => (
-                        <Ionicons name={focused ? 'information-circle' : 'information-circle-outline'} color={color} size={24} />
-                    ),
-                }} 
-            />
             <Tabs.Screen
-                name="organisations"
+            name="organisations"
                 options = {{
                     title: "Organisations",
+                
+                    tabBarIcon: ({color, focused}) => (
+                        <Ionicons 
+                            name={focused ? 'information-circle' : 'information-circle-outline'}
+                            color={color} 
+                            size={24} 
+                        />
+                    )
+
+                }}
+                />
+            <Tabs.Screen
+                name="CreateOrganisationScreen"
+                options={{
+                    title: "Create New",
+                    tabBarIcon: ({color, focused}) => (
+                        <Ionicons 
+                            name={focused ? 'add-circle' : 'add-circle-outline'} 
+                            color={color} 
+                            size={24}
+                        />
+                    )
                 }}
             />
         </Tabs>
