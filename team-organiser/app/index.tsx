@@ -10,6 +10,7 @@ export default function Index() {
       <Button title="Register" 
         onPress={() => router.push('/RegisterScreen')}
       />
+      <Button title="Login" onPress={()=>router.push('/login')} />
     </View>
   );
 }
