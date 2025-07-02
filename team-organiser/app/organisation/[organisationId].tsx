@@ -3,8 +3,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { getAuth } from "firebase/auth";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { FlatList } from "react-native-gesture-handler";
+import { View, Text, TouchableOpacity, FlatList } from "react-native";
 
 function OrganisationScreen() {
     const [loading, setLoading] = React.useState(false);
