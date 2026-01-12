@@ -26,10 +26,12 @@ function CreateOrganisationScreen() {
                 });
                 console.log("Organisation added")
                 const userDocRef = orgDocRef.collection("users").doc(user.uid)
+                const userDoc = await db.collection('users').doc(user.uid).get()
+                const userName = userDoc.data() as UserDetails
                 await userDocRef.set({
-                    userId: user.uid
+                    displayName: userName.displayName
                 })
-                router.replace("/(tabs)/organisations")
+                router.replace("/")
             }
 
         } catch (error) {
@@ -42,7 +44,7 @@ function CreateOrganisationScreen() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.container}>Create Organisation</Text>
+            <Text style={[styles.headerText, {color:"#FFF"}]}>Create Organisation</Text>
             <TextInput 
                 style={styles.textInput}
                 onChangeText={setOrgName}

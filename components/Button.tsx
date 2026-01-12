@@ -1,37 +1,39 @@
-import { StyleSheet, View, Pressable, Text } from "react-native";
+import { StyleSheet, View, Pressable, Text, StyleProp, ViewStyle } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import {styles} from '@/app/styles/global'
 
 type Props = {
     label: string;
     theme?: 'primary';
     onPress?: () => void;
+    style?: StyleProp<ViewStyle>;
 };
 
-export default function Button({ label, theme, onPress } : Props) {
+export default function Button({ label, theme, onPress, style } : Props) {
     if (theme === 'primary') {
         return (
         <View 
         style={[
-            styles.buttonContainer,
+            buttonStyles.buttonContainer,
             {borderWidth: 4, borderColor: '##ffd33d', borderRadius: 18 },
         ]}>
         <Pressable 
         style={[styles.button, { backgroundColor: '#fff' }]} onPress={onPress}>
-        <FontAwesome name="picture-o" size={18} color="#25292e" style={styles.buttonIcon} />
-        <Text style={[styles.buttonLabel, { color: '#25292e' }]}>{label}</Text>
+        <FontAwesome name="picture-o" size={18} color="#25292e" style={buttonStyles.buttonIcon} />
+        <Text style={[styles.buttonText, { color: '#25292e' }]}>{label}</Text>
         </Pressable>
         </View>
     );}
     return (
-        <View style={styles.buttonContainer}>
-            <Pressable style={styles.button} onPress={onPress}>
-                <Text style={styles.buttonLabel}>{label}</Text>
+        <View>
+            <Pressable style={style ? style : styles.button} onPress={onPress}>
+                <Text style={style ? styles.invertedButtonText: styles.buttonText}>{label}</Text>
             </Pressable>
         </View>
     )
 }
 
-const styles =StyleSheet.create({
+const buttonStyles =StyleSheet.create({
     buttonContainer: {
      width:320,
      height:68,
@@ -40,19 +42,7 @@ const styles =StyleSheet.create({
      justifyContent: 'center',
      padding: 3,   
     },
-    button: {
-        borderRadius: 10,
-        width: '100%',
-        height: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'row',
-    },
     buttonIcon: {
         paddingRight: 8,
-    },
-    buttonLabel: {
-        color: '#fff',
-        fontSize: 16,
     },
 });

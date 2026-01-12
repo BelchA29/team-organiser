@@ -1,5 +1,5 @@
-import { useRouter } from "expo-router";
-import { View, Text, Button} from "react-native";
+import { Link, useRouter } from "expo-router";
+import { View, Text} from "react-native";
 import {styles} from './styles/global'
 import { onAuthStateChanged } from "firebase/auth";
 import React from "react";
@@ -13,7 +13,7 @@ export default function Index() {
     setLoading(true)
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        router.replace("/(tabs)/organisations")
+        router.replace("./(tabs)/organisations")
       } else {
         setLoading(false)
       }
@@ -28,12 +28,13 @@ export default function Index() {
     )
   } else {
     return (
-      <View>
-        <Text style={styles.container}>Home</Text>
-        <Button title="Register" 
-          onPress={() => router.push('/RegisterScreen')}
-        />
-        <Button title="Login" onPress={()=>router.push('/login')} />
+      <View style={[styles.container, {alignItems: 'center', justifyContent:'center'}]}>
+        <Text style={[styles.headerText, {color:'#FFF'}]}>Welcome</Text>
+
+        <View style={{width: '75%'}}>
+          <Link href={"/RegisterScreen"} style={styles.button}><Text style={styles.buttonText}>Register</Text></Link>
+          <Link href={"/login"} style={styles.button}><Text style={styles.buttonText}>Login</Text></Link>
+        </View>
       </View>
     );
   }

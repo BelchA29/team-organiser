@@ -8,9 +8,9 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{headerShown: false, title:"home"}} />
         <Stack.Screen name="RegisterScreen" options={{headerShown: false, title:"Register"}} />
         <Stack.Screen name="login" options={{headerShown: false, title:"Login"}} />
-        <Stack.Screen name="CreateTeamScreen" options={{headerShown: false, title:"Create Team"}} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
+        <Stack.Screen name="(tabs)" options={{headerShown: false}} />
+        <Stack.Screen name="organisation/[orgId]" options={{headerShown: false}} />
+        <Stack.Screen name="+not-found" options={{headerShown: false}} />
     </Stack>
     <StatusBar style="light" />
   </>

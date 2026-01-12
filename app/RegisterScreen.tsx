@@ -6,11 +6,13 @@ import { FirebaseError } from 'firebase/app';
 import {auth, db} from "./src/firebaseConfig";
 
 import {styles} from './styles/global'
-import organisations from './(tabs)/organisations';
 
 function RegisterScreen() {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
+    const [confirmPassword, setConfirmPassword] = React.useState('');
+    const [firstName, setFirstName] = React.useState('');
+    const [lastName, setLastName] = React.useState('');
     const [loading, setLoading] = React.useState(false)
     const [errorFlag, setErrorFlag] = React.useState(false);
     const [errorMessage, setErrorMessage] = React.useState("")
@@ -18,7 +20,11 @@ function RegisterScreen() {
 
     const handleRegister = async () => {
         setLoading(true);
-
+        if (password != confirmPassword) {
+            setErrorMessage("Passwords do not match")
+            setLoading(false)
+            return
+        }
         try {
             const userCredentials = await createUserWithEmailAndPassword(auth, email, password);
 
@@ -27,11 +33,11 @@ function RegisterScreen() {
 
             const userRef = db.collection("users").doc(user.uid)
             userRef.set( {
-                name: "",
-                organisations: []
+                displayName: firstName + ' ' + lastName
             })
-            Alert.alert("Success", `Welcome, ${user.email}`);
-            router.replace('/(tabs)/organisations');
+            
+            Alert.alert("Success", `Welcome, ${firstName} ${lastName}`);
+            router.replace('./(tabs)/organisations');
         } catch (error: unknown) {
             if (error instanceof FirebaseError) {
                 console.error("Registration error: ", error.code, error.message)
@@ -63,20 +69,51 @@ function RegisterScreen() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.container}>Register</Text>
-            
+            <View style={{paddingTop:50, alignItems: 'center'}}>
+                <Text style={[styles.headerText, {color: '#FFF'}]}>Register</Text>
+            </View>
+
+            <Text style={styles.inputLabel}>Email: </Text>
             <TextInput 
                 onChangeText={setEmail} 
                 value={email}
-                placeholder='Email'
+                placeholder='abe@mail.com'
                 style={styles.textInput}
                 keyboardType="email-address"
                 autoCapitalize="none"
             />
+
+            <Text style={styles.inputLabel}>First Name: </Text>
+            <TextInput 
+                onChangeText={setFirstName}
+                value={firstName}
+                placeholder='John'
+                style={styles.textInput}
+                autoCapitalize='words'
+            />
+
+            <Text style={styles.inputLabel}>Surname: </Text>
+            <TextInput 
+                onChangeText={setLastName}
+                value={lastName}
+                placeholder='Doe'
+                style={styles.textInput}
+                autoCapitalize='words'
+            />
+
+            <Text style={styles.inputLabel}>Password: </Text>
             <TextInput 
                 onChangeText={setPassword} 
                 value={password}
-                placeholder='Password'
+                placeholder='********'
+                style={styles.textInput}
+                secureTextEntry
+            />
+            <Text style={styles.inputLabel}>Confirm Password: </Text>
+            <TextInput 
+                onChangeText={setConfirmPassword} 
+                value={confirmPassword}
+                placeholder='********'
                 style={styles.textInput}
                 secureTextEntry
             />
@@ -84,11 +121,14 @@ function RegisterScreen() {
             onPress={handleRegister}
             disabled={loading}
             />
-            <Text>{errorMessage}</Text>
-            {/* <Button title="Already have an account? Login"
-            onPress={() => navigation.navigate('Login')}
-            color="grey"
-            /> */}
+            <Text style={styles.errorText}>{errorMessage}</Text>
+            <View style={{flex:1}}></View>
+            <View style={{paddingBottom: 50}}>
+                <Button title="Already have an account? Login"
+                onPress={() => router.push('./login')}
+                color="grey"
+                />
+            </View>
         </View>
     );
 }

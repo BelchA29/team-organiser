@@ -1,8 +1,8 @@
 import React from 'react';
 import {useLocalSearchParams, useRouter} from "expo-router";
-import { TextInput, View, StyleSheet, Button, Alert, Text } from 'react-native';
-import { auth, db } from "../../src/firebaseConfig";
-import {styles} from "../../styles/global";
+import { TextInput, View, Button, Text } from 'react-native';
+import { auth, db } from "@/app//src/firebaseConfig";
+import {styles} from "@/app/styles/global";
 
 function CreateTeamScreen() {
     const [teamName, setTeamName] = React.useState("")
@@ -10,21 +10,23 @@ function CreateTeamScreen() {
     const [maxTeamMembers, setMaxTeamMembers] = React.useState("")
     const [errorMessage, setErrorMessage] = React.useState("")
     const [isLoading, setLoading] = React.useState(false)
-    const {CreateId} = useLocalSearchParams()
 
     const router = useRouter()
+    const currentUser = auth.currentUser
+
+    const params = useLocalSearchParams()
+    const orgId = params.orgId
 
     async function handleCreateTeam() {
-        console.log(CreateId)
         setLoading(true)
 
-        if (typeof CreateId !== 'string') {
+        if (typeof orgId !== 'string') {
             setLoading(false)
             setErrorMessage("No such organisation")
             return;
         }
         try 
-        { const orgRef = db.collection("organisations").doc(CreateId).collection("teams").doc(teamName)
+        { const orgRef = db.collection("organisations").doc(orgId).collection("teams").doc(teamName)
             const teams = await orgRef.get()
             if (teams.exists()) {
                 setErrorMessage("Team already exists")
@@ -32,10 +34,11 @@ function CreateTeamScreen() {
             }
             await orgRef.set( {
                 name: teamName,
+                creator: currentUser?.uid,
                 minTeamMembers: minTeamMembers,
                 maxTeamMembers: maxTeamMembers
             })
-            router.replace(`../../organisation/${CreateId}`)
+            router.replace(`/organisation/${orgId}/${teamName}/ViewTeam`)
             setLoading(false)
             setErrorMessage("")
         } catch (error) {
@@ -70,14 +73,14 @@ function CreateTeamScreen() {
                 keyboardType='numeric'
                 onChangeText={setMinTeamMembers}
                 value={minTeamMembers}
-                placeholder='Min Team memebers'
+                placeholder='Min Team members'
             /> 
             <TextInput 
                 style={styles.textInput}
                 keyboardType='numeric'
                 onChangeText={setMaxTeamMembers}
                 value={maxTeamMembers}
-                placeholder='Max Team memebers'
+                placeholder='Max Team members'
             />
             <Button title="Add" onPress={handleCreateTeam}/>
         </View>

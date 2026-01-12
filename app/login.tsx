@@ -18,7 +18,7 @@ export default function login() {
         setLoading(true)
             signInWithEmailAndPassword(auth, email, password).then(() => {
                 console.log("Signed in")
-                router.replace("/(tabs)/organisations");
+                router.replace("/");
             }).catch((error) => {
                 if (error instanceof FirebaseError) {
                     console.log(error.code)
@@ -48,29 +48,43 @@ export default function login() {
     } 
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.container}>Login</Text>
+        <View style={[styles.container, {alignItems:'center', justifyContent:'center', paddingTop:50}]}>
+            <Text style={[styles.headerText, {color:'#FFF'}]}>Login</Text>
             
-            <TextInput 
-                onChangeText={setEmail} 
-                value={email}
-                placeholder='Email'
-                style={styles.textInput}
-                keyboardType="email-address"
-                autoCapitalize="none"
-            />
-            <TextInput 
-                onChangeText={setPassword} 
-                value={password}
-                placeholder='Password'
-                style={styles.textInput}
-                secureTextEntry
-            />
+            <View style={{width: '100%'}}>
+            <Text style={styles.inputLabel}>Email: </Text>
+                <TextInput 
+                    onChangeText={setEmail} 
+                    value={email}
+                    placeholder='abc@mail.com'
+                    style={styles.textInput}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                />
+            </View>
+            <View style={{width: '100%'}}>
+                <Text style={styles.inputLabel}>Password: </Text>
+                <TextInput 
+                    onChangeText={setPassword}
+                    placeholder="********" 
+                    value={password}
+                    style={styles.textInput}
+                    secureTextEntry
+                />
+            </View>
             <Button title={loading ? "Loading..." : "Login"}
             onPress={handleLogin}
             disabled={loading}
             />
-            <Text>{errorMessage}</Text>
+            <Text style={styles.errorText}>{errorMessage}</Text>
+
+            <View style={{flex:1}}></View>
+            <View style={{paddingBottom: 50}}>
+                <Button title="Don't have an account? Register"
+                onPress={() => router.push('/RegisterScreen')}
+                color="grey"
+                />
+            </View>
         </View>
     );
 };

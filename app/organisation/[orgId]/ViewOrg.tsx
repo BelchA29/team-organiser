@@ -1,8 +1,9 @@
 import { styles } from "@/app/styles/global";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import React from "react";
-import { View, Text, TouchableOpacity, FlatList } from "react-native";
-import {auth, db} from "../src/firebaseConfig"
+import { View, Text, ScrollView, FlatList } from "react-native";
+import {auth, db} from "../../src/firebaseConfig"
+import { GetCreateTeam, GetViewTeam } from "@/app/services/routes";
 
 function OrganisationScreen() {
     const [loading, setLoading] = React.useState(false);
@@ -13,7 +14,8 @@ function OrganisationScreen() {
     const currentUser = auth.currentUser
 
     const router = useRouter();
-    const {organisationId} = useLocalSearchParams();
+    const params = useLocalSearchParams();
+    const orgId = params.orgId
     
     React.useEffect(() => {
         getOrganisation();
@@ -23,15 +25,14 @@ function OrganisationScreen() {
         setLoading(true)
 
         if (!currentUser) {
-            router.replace('/RegisterScreen');
+            router.replace('../RegisterScreen');
         }
-        if (typeof organisationId !== 'string') {
+        if (typeof orgId !== 'string') {
             setErrorFlag(true)
             setErrorMessage("No organisation found")
         } else {
-            console.log(organisationId)
             try {
-                const getDocRef = db.collection('organisations').doc(organisationId)
+                const getDocRef = db.collection('organisations').doc(orgId)
                 const orgDoc = await getDocRef.get();
                 const org = orgDoc.data() as Organisation;
                 const getTeamRefs = getDocRef.collection("teams")
@@ -74,27 +75,20 @@ function OrganisationScreen() {
         } else {
             return (
                 <View style={styles.container}>
-                    <Text style={styles.buttonText}>{organisation.name}</Text>
+                    <Text style={[styles.headerText, {color:'white'}]}>{organisation.name}</Text>
                     {currentUser?.uid === organisation.creator ? 
-                        <TouchableOpacity style={styles.button} onPress={() => router.push(`../teams/createTeam/${organisationId}`)}>
-                            <Text style={styles.buttonText}>
-                                Add Team
-                            </Text>
-                        </TouchableOpacity>
+                        GetCreateTeam(orgId.toString(), "Add Team")
                     : null}
-                    <FlatList
-                        data={organisation.teams} 
-                        style={styles.itemList}
-                        renderItem={({item}) => 
-                            <View style={styles.item}>
-                                <TouchableOpacity style={styles.button} onPress={() => {}}>
-                                    <Text style={styles.buttonText}>
-                                        {item.name}
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
-                        }
-                    />
+                        <FlatList
+                            data={organisation.teams} 
+                            scrollEnabled
+                            style={[styles.itemList, {flexDirection: 'row', flexWrap: 'wrap', backgroundColor:'white', borderRadius: 5}]}
+                            renderItem={({item}) => 
+                                <View style={styles.item}>
+                                    {GetViewTeam(orgId.toString(), item.name, item.name)}
+                                </View>
+                            }
+                        />
                 </View>
             )
         }
