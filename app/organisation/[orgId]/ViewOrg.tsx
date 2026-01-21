@@ -10,6 +10,7 @@ function OrganisationScreen() {
     const [organisation, setOrganisation] = React.useState<Organisation>()
     const [errorFlag, setErrorFlag] = React.useState(false);
     const [errorMessage, setErrorMessage] = React.useState("");
+    const [teamList, setTeamList] = React.useState<Array<Team>>([]);
 
     const currentUser = auth.currentUser
 
@@ -37,10 +38,10 @@ function OrganisationScreen() {
                 const org = orgDoc.data() as Organisation;
                 const getTeamRefs = getDocRef.collection("teams")
                 const teamDocs =  await getTeamRefs.get()
-                org.teams = []
+                const teams = []
                 for (const team of teamDocs.docs) {
                     const teamData = team.data() as Team;
-                    org.teams.push(teamData)
+                    teams.push(teamData)
                 }
                 setOrganisation(org);
                 setErrorFlag(false);
@@ -80,7 +81,7 @@ function OrganisationScreen() {
                         GetCreateTeam(orgId.toString(), "Add Team")
                     : null}
                         <FlatList
-                            data={organisation.teams} 
+                            data={teamList} 
                             scrollEnabled
                             style={[styles.itemList, {flexDirection: 'row', flexWrap: 'wrap', backgroundColor:'white', borderRadius: 5}]}
                             renderItem={({item}) => 

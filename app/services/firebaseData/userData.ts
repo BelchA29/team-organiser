@@ -1,0 +1,24 @@
+import { COLLECTiON_ORGS, COLLECTiON_USERS } from '@/app/src/constants';
+import {auth, db} from '@/app/src/firebaseConfig';
+import { setDoc, doc, getDoc } from '@react-native-firebase/firestore';
+
+export async function getCurrentUser() {
+    const user = auth.currentUser
+    if (!user) {
+        console.error("No current user")
+        return "No authenticated user"
+    }
+    let userDetails : UserDetails;
+    try {
+        const userDocs = await getDoc(doc(db, COLLECTiON_USERS, user.uid))
+        userDetails = userDocs.data() as UserDetails
+        userDetails.userId = userDocs.id
+    } catch (error) {
+        console.error(error)
+        return "Cannot get User Details"
+    }
+    if (userDetails) {
+        return userDetails
+    }
+    return "No user details found"
+}

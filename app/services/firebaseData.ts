@@ -16,12 +16,6 @@ export async function getOrgUsers(orgId: string) : Promise<Array<UserDetails>> {
     }
 }
 
-export async function getOrg(orgId: string) : Promise<Organisation> {
-    const orgDoc = await db.collection("organisations").doc(orgId).get()
-    const org: Organisation = orgDoc.data() as Organisation
-    return org
-}
-
 export async function getTeamUsers(orgId: string, teamId: string) : Promise<Array<UserDetails>> {
     try {
         const usersDocs = await db.collection("organisations").doc(orgId).collection("teams").doc(teamId).collection("members").get()
