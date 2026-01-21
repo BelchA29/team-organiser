@@ -1,11 +1,13 @@
 import React, { useCallback } from 'react'
-import { useRootNavigationState, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { View, Text, Button, FlatList, Modal, TextInput } from 'react-native';
 import {styles} from '../styles/global';
 import { useFocusEffect } from '@react-navigation/native';
 
-import {auth, db} from '../src/firebaseConfig';
+import {auth} from '../src/firebaseConfig';
 import { GetOrganisation } from '@/app/services/routes';
+import { addUserToOrg, getAllOrgs, getOrg, getUserInOrg } from '../services/firebaseData/organisationData';
+import { getCurrentUser } from '../services/firebaseData/userData';
 
 function organisations() {
     const [organisations, setOrganisations] = React.useState<Organisation[]>([]);
@@ -13,8 +15,8 @@ function organisations() {
     const [visible, setVisible] = React.useState(false);
     const [joinCode, setJoinCode] = React.useState("");
     const [errorMessage, setErrorMessage] = React.useState("")
+    const [errorFlag, setErrorFlag] = React.useState(false)
     const router = useRouter();
-    const rootNavigationState = useRootNavigationState();
 
     const currentUser = auth.currentUser
 
@@ -27,54 +29,54 @@ function organisations() {
 
     async function getOrganisations() {
         setLoading(true)
-        try {
-            const orgsRef = db.collection("organisations")
-            const userOrgs = await orgsRef.get();
-            const orgs: Array<Organisation> = [];
-            for (const org of userOrgs.docs) {
-                const orgData = org.data() as Omit<Organisation, 'id'>;
-                const userList = await orgsRef.doc(orgData.name).collection("users").doc(currentUser?.uid).get()
-                if (userList.data()) {
-                    orgs.push(orgData)
-                }
-            }
-            if (orgs.length == 0) {
-                setLoading(false);
-                return;
-            }
-            setOrganisations(orgs)
-            setLoading(false)
-        } catch (error) {
-            console.error(error);
-            setLoading(false)
+        const allOrgs = await getAllOrgs();
+        if (typeof allOrgs == "string") {
+            setErrorFlag(true);
+            setErrorMessage(allOrgs);
+            setLoading(false);
+            return;
         }
+        
+        const userInOrg = []
+        for (const org of allOrgs) {
+            const userDocs = await getUserInOrg(org.name, currentUser!.uid);
+            if (typeof userDocs != "string") {
+                userInOrg.push(org);
+            }
+        }
+        setOrganisations(userInOrg)
+        setLoading(false)
     }
 
     async function handleJoin() {
         setLoading(true)
-        const orgDocRef = db.collection('organisations').doc(joinCode)
-        try {
-            const orgResults = await orgDocRef.get()
-            if (orgResults.exists()) {
-                const orgData = orgResults.data() as Organisation;
-                if (currentUser) {
-                    // const userDetails: UserDetails = await getUserDetails(currentUser.uid)
-                    await orgDocRef.collection("users").doc(currentUser.uid).set({
-                        firstName: currentUser.displayName,
-                        lastName: currentUser.displayName,
-                    })                     
-                }
-                organisations.push(orgData)
-                setOrganisations(organisations)
-                setJoinCode("")
-                setErrorMessage("")
-                setVisible(false);
-            } else {
-                setErrorMessage("No such organisation")
-            }
-        } catch (error) {
-            console.error(error)
+
+        const [org, userDetails] = await Promise.all([getOrg(joinCode), getCurrentUser()]);
+        if (!org || typeof org == "string") {
+            setErrorFlag(true);
+            setErrorMessage("Error finding organisation");
+            setLoading(false);
+            return;
         }
+        if (typeof userDetails == "string") {
+            setErrorFlag(true)
+            setErrorMessage("No current user")
+            setLoading(false);
+            return
+        } 
+
+        const userAdded = await addUserToOrg(joinCode, userDetails.displayName);
+        if (typeof userAdded == "string") {
+            setErrorFlag(true);
+            setErrorMessage(userAdded);
+            setLoading(false);
+            return;
+        }
+
+        setOrganisations(prevOrgs => [...prevOrgs, org])
+        setJoinCode("")
+        setErrorMessage("")
+        setVisible(false);
         setLoading(false)
     }
 
@@ -101,7 +103,7 @@ function organisations() {
                     >
                         <View style={styles.modalOverlay}>
                             <View style={styles.modalContent}>
-                                <Text>Join</Text>
+                                <Text style={styles.headerText}>Join</Text>
                                 <TextInput style={styles.textInput} onChangeText={setJoinCode} value={joinCode} placeholder='Club Name' />
                                 <Text style={styles.errorText}>{errorMessage}</Text>
                                 <View style={{flexDirection: 'row', gap: 10, justifyContent:'flex-end'}}>

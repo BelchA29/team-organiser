@@ -2,7 +2,7 @@ import { COLLECTiON_ORGS, COLLECTiON_USERS } from '@/app/src/constants';
 import {auth, db} from '@/app/src/firebaseConfig';
 import { setDoc, doc, getDoc } from '@react-native-firebase/firestore';
 
-export async function getCurrentUser() {
+export async function getCurrentUser() : Promise <UserDetails | string> {
     const user = auth.currentUser
     if (!user) {
         console.error("No current user")
