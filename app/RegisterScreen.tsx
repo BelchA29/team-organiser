@@ -1,9 +1,7 @@
 import React from 'react';
 import { TextInput, View, Button, Alert, Text } from 'react-native';
-import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from 'expo-router';
-import { FirebaseError } from 'firebase/app';
-import {auth, db} from "./src/firebaseConfig";
+import { setUser } from "@/app/services/firebaseData/registerData" 
 
 import {styles} from './styles/global'
 
@@ -25,45 +23,16 @@ function RegisterScreen() {
             setLoading(false)
             return
         }
-        try {
-            const userCredentials = await createUserWithEmailAndPassword(auth, email, password);
-
-            const user = userCredentials.user;
-            console.log("User registreed: ", user.email);
-
-            const userRef = db.collection("users").doc(user.uid)
-            userRef.set( {
-                displayName: firstName + ' ' + lastName
-            })
-            
-            Alert.alert("Success", `Welcome, ${firstName} ${lastName}`);
-            router.replace('./(tabs)/organisations');
-        } catch (error: unknown) {
-            if (error instanceof FirebaseError) {
-                console.error("Registration error: ", error.code, error.message)
-                setErrorFlag(true)
-
-                switch (error.code) {
-                    case 'auth/email-already-in-use':
-                        setErrorMessage("This email is already in use.");
-                        break;
-                        case 'auth/invalid-email':
-                            setErrorMessage('Please enter a valid email address.');
-                            break;
-                        case 'auth/weak-password':
-                            setErrorMessage("Password should be at least 6 characters");
-                            break;
-                        case 'auth/network-request-failed':
-                            setErrorMessage("Network error. Please check your internet connection");
-                            break;
-                        default:
-                            setErrorMessage(`Registration failed: ${error.message}`);
-                            break;
-                }
-            } else {
-                console.error(error);
-            }
+        const user = await setUser(email, password, firstName + ' ' + lastName)
+        if (typeof user == "string") {
+            setErrorFlag(true)
+            setErrorMessage(user)
+            setLoading(false)
+            return
         }
+
+        Alert.alert("Success", `Welcome, ${firstName} ${lastName}`);
+        router.replace('./(tabs)/organisations');
         setLoading(false)
     }
 
