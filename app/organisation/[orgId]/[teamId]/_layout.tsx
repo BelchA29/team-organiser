@@ -9,7 +9,7 @@ export default function TeamLayout() {
       />
 
       <Stack.Screen
-        name="createEvent"
+        name="CreateEvent"
         options={{ title: 'Create Event' }}
       />
 
