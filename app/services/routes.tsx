@@ -44,7 +44,7 @@ export function GetCreateEvent(orgId:string, teamId: string, label:string) {
      return (
         <Link
             href={{
-                pathname: "/organisation/[orgId]/[teamId]/createEvent",
+                pathname: "/organisation/[orgId]/[teamId]/CreateEvent",
                 params: {orgId: orgId, teamId: teamId}
             }}
             style={styles.button}

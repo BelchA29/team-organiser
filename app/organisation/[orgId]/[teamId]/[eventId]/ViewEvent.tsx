@@ -3,11 +3,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, Text, FlatList, Modal, Pressable, TextInput } from 'react-native';
 import {styles} from '@/app/styles/global';
 import { useFocusEffect } from '@react-navigation/native';
-import {auth, db} from '@/app//src/firebaseConfig';
-import { getOrgUsers, getEventUsers } from '@/app/services/firebaseData';
+import {auth} from '@/app//src/firebaseConfig';
 import { Tabs } from '@/components/Tabs';
 import IconButton from '@/components/IconButton';
 import Button from '@/components/Button';
+import { addUserToEvent, getEvent, getEventMembers, updateEventMemberStatus } from '@/app/services/firebaseData/eventsData';
+import { getOrgUsers } from '@/app/services/firebaseData/organisationData';
 
 function EventScreen() {
     const [openModal, setOpenModal] = React.useState(false);
@@ -25,6 +26,8 @@ function EventScreen() {
     const [visibleMembers, setVisibleMembers] = React.useState<Array<UserEventStatus>>([])
     const [availibility, setAvailibility] = React.useState("")
     const [disableInOut, setDisableInOut] = React.useState(false)
+    const [errorFlag, setErrorFlag] = React.useState(false)
+    const [errorMessage, setErrorMessage] = React.useState("")
 
     const router = useRouter();
 
@@ -43,28 +46,30 @@ function EventScreen() {
 
     async function getEventDetails() {
         setLoading(true)
+        console.debug(orgId)
+        console.debug(teamId)
         if (typeof orgId != "string" ||  typeof teamId != "string" || typeof eventId != "string") {
-            console.error("Create Event: Invalid Id")
+            console.error("Get Event: Invalid Id")
             return
         }
-        try {
-            const eventDoc = await db.collection("organisations").doc(orgId).collection("teams").doc(teamId).collection("events").doc(eventId).get()
-            if (eventDoc == undefined) {
-                console.error("No event found")
-                return
-            }
-            const eventDetails = eventDoc.data() as EventDetails
-            eventDetails.id = eventDoc.id
-            setEvent(eventDetails)
-        } catch (e) {
-            console.error("Error getting event to display")
-            return
+        const newEvent = await getEvent(orgId, teamId, eventId);
+        if (typeof newEvent == "string") {
+            setErrorFlag(true)
+            setErrorMessage(newEvent)
+            setLoading(false)
+            return;
         }
-        try {
-            setMembers(await getEventUsers(orgId, teamId, eventId));
-        } catch (e) {
-            console.error("Unable to get event members")
+        setEvent(newEvent)
+        const eventMembers = await getEventMembers(orgId, teamId, eventId);
+        if (typeof eventMembers == "string") {
+            setErrorFlag(true)
+            setErrorMessage(eventMembers)
+            setLoading(false)
+            return;
         }
+        setMembers(eventMembers)
+        setErrorFlag(false)
+        setErrorMessage("")
         setLoading(false)
     }
 
@@ -77,7 +82,13 @@ function EventScreen() {
             setOpenModal(false)
             return
         }
-        const [orgMembers, eventMembers] = await Promise.all([getOrgUsers(orgId), getEventUsers(orgId, teamId, eventId)]) 
+        const [orgMembers, eventMembers] = await Promise.all([getOrgUsers(orgId), getEventMembers(orgId, teamId, eventId)]) 
+        if (typeof orgMembers == "string" || typeof eventMembers == "string") {
+            console.error("Error getting org and/or event members")
+            setModalLoading(false)
+            setOpenModal(false)
+            return
+        }
         setUserList(orgMembers.filter((user) => !eventMembers.some((member) => user.userId === member.id)))
         setModalLoading(false)
     }
@@ -85,24 +96,19 @@ function EventScreen() {
     async function addNewMembers() {
         setModalLoading(true)
         if (typeof orgId != "string" ||  typeof teamId != "string" || typeof eventId != "string") {
-            console.error("Create Event: Invalid Id")
+            console.error("Add new member: Invalid Id")
             return
         }
-        try {
-            const eventDocs = db.collection("organisations").doc(orgId).collection("teams").doc(teamId).collection("events").doc(eventId)
-            await eventDocs.get()
-            for (const memeber of selectedList){
-                const addingMembers = await eventDocs.collection("members").doc(memeber.userId).set({
-                    displayName: memeber.displayName,
-                    response: null,
-                    note: ""
-                })
-            } 
-            setOpenModal(false)      
-        } catch (e){
-            console.error("get event members error")
-            console.error(e)
-        }
+        for (const memeber of selectedList){
+            const memberData = {
+                id: memeber.userId,
+                displayName: memeber.displayName,
+                response: null,
+                note: ""
+            }
+            const addingMembers = await addUserToEvent(orgId, teamId, eventId, memberData)
+        } 
+        setOpenModal(false)      
         setModalLoading(false)
     }
 
@@ -124,28 +130,37 @@ function EventScreen() {
     }
 
     async function updateUserAvalibility() {
+        setLoading(true)
         setDisableInOut(true)
         if (typeof orgId != "string" ||  typeof teamId != "string" || typeof eventId != "string") {
-            console.error("Create Event: Invalid Id")
+            console.error("User Availibility: Invalid Id")
+            setErrorFlag
+            return
+        }
+        if (!currentUser) {
+            setErrorFlag(true)
+            setErrorMessage("No authorised user")
+            setLoading(false)
             return
         }
         const result = availibility == 'i'
-        try {
-            const userDoc = await db.collection('organisations').doc(orgId).collection('teams').doc(teamId).collection('events').doc(eventId).collection('members').doc(currentUser?.uid).update({
-                response: result,
-                note: newNote
-            })
-            const updatedMember = members.map((user) => { 
-                if (user.id == currentUser?.uid) {
-                    user.response = result
-                }
-                return user
-            })
-            setMembers(updatedMember)
-        } catch (e) {
-            console.error("Error updaing users availibility")
-            console.error(e)
+        const updatedUser = await updateEventMemberStatus(orgId, teamId,eventId, currentUser?.uid, {response: result, note: newNote});
+        if (typeof updatedUser == "string") {
+            setErrorFlag(true)
+            setErrorMessage(updatedUser)
+            setLoading(false)
+            return
         }
+        const updatedMember = members.map((user) => { 
+        if (user.id == currentUser.uid) {
+            user.response = result
+        }
+        return user
+        })
+        setMembers(updatedMember)
+        setLoading(false)
+        setErrorFlag(false)
+        setErrorMessage("")
         setOpenAddNote(false)
         setDisableInOut(false)
     }
@@ -199,6 +214,14 @@ function EventScreen() {
         return (
             <View>
                 <Text>No event</Text>
+                <Button onPress={router.back} label='Back' />
+            </View>
+        )
+    }
+    if (errorFlag) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.errorText}>{errorMessage}</Text>
                 <Button onPress={router.back} label='Back' />
             </View>
         )

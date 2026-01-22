@@ -13,7 +13,7 @@ function ProfileScreen(){
             Alert.alert('Logged out')
             router.replace('/')
         } catch (error) {
-            console.log(error)
+            console.error(error)
         }
     }
 

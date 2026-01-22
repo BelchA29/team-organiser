@@ -123,7 +123,7 @@ function TeamScreen() {
     async function addNewMembers() {
         setModalLoading(true)
         if (typeof orgId != "string" ||  typeof teamId != "string") {
-            console.error("Create Event: Invalid Id")
+            console.error("Add New Member: Invalid Id")
             return
         }
         for (const memeber of selectedList){
@@ -148,21 +148,14 @@ function TeamScreen() {
 
     function getUserName(item: UserDetails) {
         const isSelected = selectedList.has(item.userId)
-        console.log(item)
         return (
             <View>
                 <Pressable 
-                    onPress={() =>{
-                        console.log("")
-                        console.log(selectedList)
-                        setSelectedList(prev => {
-                            const next = new Set(prev)
-                            next.has(item.userId) ? next.delete(item.userId) : next.add(item.userId)
-                            return next
-                                })
-                        console.log(selectedList)
-                        console.debug("")
-                            }
+                    onPress={() => setSelectedList(prev => {
+                                const next = new Set(prev)
+                                next.has(item.userId) ? next.delete(item.userId) : next.add(item.userId)
+                                return next
+                            })
                          }
                     style={isSelected ? styles.item: styles.listItemNotSelected}>
                     <Text>{item.displayName}</Text>

@@ -1,16 +1,18 @@
-import React, { FormEventHandler } from 'react'
+import React from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, Text, Button, TextInput } from 'react-native';
-import {styles} from '../../../styles/global';
+import {styles} from '@/app/styles/global';
 import {DateTimePickerAndroid, DateTimePickerEvent} from '@react-native-community/datetimepicker'
-
-import {auth, db} from '../../../src/firebaseConfig';
+import { addUserToEvent, setEvent } from '@/app/services/firebaseData/eventsData';
+import { getTeamMembers } from '@/app/services/firebaseData/teamData';
 
 function CreateEventScreen() {
     const [eventTitle, setEventTitle] = React.useState("");
     const [eventDescription, setEventDescription] = React.useState("")
     const [eventDate, setEventDate] = React.useState(new Date())
     const [isLodaing, setIsLoading] = React.useState(false)
+    const [errorFlag, setErrorFlag] = React.useState(false)
+    const [errorMessage, setErrorMessage] = React.useState("")
 
     const router = useRouter()
 
@@ -18,40 +20,50 @@ function CreateEventScreen() {
     const teamId = params.teamId
     const orgId = params.orgId
 
-    async function createTeam() {
+    async function createEvent() {
+        setIsLoading(true)
+        console.debug(orgId)
+        console.debug(teamId)
         if (typeof orgId != "string" ||  typeof teamId != "string") {
             console.error("Create Event: Invalid Id")
             return
         }
-        const teamDocs = db.collection("organisations").doc(orgId).collection("teams").doc(teamId)
-        let eventDoc = undefined
-        const date: number = eventDate.getTime()
-        try {
-            eventDoc = await teamDocs.collection("events").add({
-                title: eventTitle,
-                description: eventDescription,
-                date: date
+        const date: number = eventDate.getTime();
+        const eventData = {
+            id: eventTitle,
+            title: eventTitle,
+            description: eventDescription,
+            date: date
+        };
+        const newEvent = await setEvent(orgId, teamId, eventData);
+        if (typeof newEvent == "string") {
+            setErrorFlag(true)
+            setErrorMessage(newEvent)
+            setIsLoading(false)
+            return;
+        }
+        const teamMembers = await getTeamMembers(orgId, teamId);
+        if (typeof teamMembers == "string") {
+            setErrorFlag(true)
+            setErrorMessage(teamMembers)
+            setIsLoading(false)
+            return
+        }
+        teamMembers.map((user) => {
+            const result = addUserToEvent(orgId, teamId, newEvent.id, {
+                id: user.userId,
+                displayName: user.displayName,
+                response: null,
+                note: ""
             })
-        } catch (e) {
-            console.log("Error creating event")
-            console.log(e)
-        }
-        if (eventDoc) {
-            try {
-                const usersDocs = await db.collection("organisations").doc(orgId).collection("users").get()
-                for (const user of usersDocs.docs) {
-                    const userData: UserDetails = user.data() as UserDetails
-                    teamDocs.collection("events").doc(eventDoc.id).collection('members').doc(user.id).set({
-                        response: null,
-                        note: ""
-                    })
-                }
-            } catch (e) {
-                console.log("Unable to add event")
-                teamDocs.collection("events").doc(eventDoc.id).delete()
+            if (typeof result == "string") {
+                setErrorFlag(true)
+                setErrorMessage(result)
+                return
             }
-            router.back()
-        }
+        })
+        setIsLoading(false)
+        router.replace(`/organisation/[orgId]/[teamId]/[eventId]/ViewEvent`)
         return
     }
 
@@ -80,6 +92,21 @@ function CreateEventScreen() {
         showMode('time')
     }
 
+    if (isLodaing) {
+        return (
+            <View style={styles.container}>
+                <Text>Loading...</Text>
+            </View>
+        )
+    }
+    if (errorFlag) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.errorText}>{errorMessage}</Text>
+                <Button onPress={router.back} title="Back" />
+            </View>
+        )
+    }
     return (
         <View style={styles.container}>
             <Text style={[styles.headerText, {color: '#FFF'}]}></Text>
@@ -89,7 +116,7 @@ function CreateEventScreen() {
             <Button onPress={showDatePicker} title={"Date: " + eventDate.toLocaleDateString(undefined, {weekday: 'short', year: '2-digit', month: 'long', day:'numeric'})} />
             <Button onPress={showTimePicker} title={"Time: " + eventDate.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit'})} />
 
-            <Button onPress={createTeam} title={"Create Event"} />
+            <Button onPress={createEvent} title={"Create Event"} />
         </View>
     )
 }

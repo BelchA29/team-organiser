@@ -21,7 +21,7 @@ export default function login() {
                 router.replace("/");
             }).catch((error) => {
                 if (error instanceof FirebaseError) {
-                    console.log(error.code)
+                    console.error(error.code)
                     switch (error.code) {
                         case "auth/invalid-credential":
                             setErrorMessage("Invalid email or password");
