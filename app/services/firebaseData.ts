@@ -1,4 +1,4 @@
-import {auth, db} from '../src/firebaseConfig';
+import {db} from '../src/firebaseConfig';
 
 export async function getOrgUsers(orgId: string) : Promise<Array<UserDetails>> {
     try {

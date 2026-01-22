@@ -1,9 +1,11 @@
 import { styles } from "@/app/styles/global";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import React from "react";
-import { View, Text, ScrollView, FlatList } from "react-native";
-import {auth, db} from "../../src/firebaseConfig"
+import { View, Text, FlatList } from "react-native";
+import {auth} from "../../src/firebaseConfig"
 import { GetCreateTeam, GetViewTeam } from "@/app/services/routes";
+import { getOrg } from "@/app/services/firebaseData/organisationData";
+import { getAllTeams } from "@/app/services/firebaseData/teamData";
 
 function OrganisationScreen() {
     const [loading, setLoading] = React.useState(false);
@@ -29,31 +31,27 @@ function OrganisationScreen() {
             router.replace('../RegisterScreen');
         }
         if (typeof orgId !== 'string') {
-            setErrorFlag(true)
-            setErrorMessage("No organisation found")
+            setErrorFlag(true);
+            setErrorMessage("No organisation found");
         } else {
-            try {
-                const getDocRef = db.collection('organisations').doc(orgId)
-                const orgDoc = await getDocRef.get();
-                const org = orgDoc.data() as Organisation;
-                const getTeamRefs = getDocRef.collection("teams")
-                const teamDocs =  await getTeamRefs.get()
-                const teams = []
-                for (const team of teamDocs.docs) {
-                    const teamData = team.data() as Team;
-                    teams.push(teamData)
-                }
-                setOrganisation(org);
-                setErrorFlag(false);
-                setErrorMessage("");
-            } catch (error) {
-                    setErrorFlag(true);
-                    if (error instanceof Error) {
-                        setErrorMessage(error.message)
-                    } else {
-                        setErrorMessage("Unknown Error when retriving organisation")
-                    }
+            const org = await getOrg(orgId);
+            if (typeof org == "string") {
+                setErrorFlag(true);
+                setErrorMessage(org);
+                setLoading(false);
+                return;
             }
+            setOrganisation(org);
+            const teams = await getAllTeams(orgId);
+            if (typeof teams == "string") {
+                setErrorFlag(true);
+                setErrorMessage(teams);
+                setLoading(false);
+                return;
+            }
+            setTeamList(teams)
+            setErrorFlag(false);
+            setErrorMessage("");
         }
         setLoading(false)
     }
