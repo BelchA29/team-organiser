@@ -22,10 +22,12 @@ export async function getAllOrgs() {
 }
 
 export async function getOrg(orgName: string) {
-    let organisation : Organisation | string = "";
+    let organisation : Organisation | string = "No Organisation";
     try {
         const orgDocs = await getDoc(doc(db, COLLECTiON_ORGS, orgName))
-        organisation = orgDocs.data() as Organisation
+        if (orgDocs.exists()) {
+            organisation = orgDocs.data() as Organisation
+        }
     } catch (error) {
         console.error(error)
     }
@@ -34,7 +36,7 @@ export async function getOrg(orgName: string) {
 
 export async function setOrg(orgName: string) {
     const user = auth.currentUser;
-    if (!user) return;
+    if (!user) return "No user authenticated";
     try {
         await setDoc(doc(db, COLLECTiON_ORGS, orgName), {
             name: orgName,
@@ -75,6 +77,7 @@ export async function getUserInOrg(orgName: string, userId: string) {
             return "No user in this org";
         }
         user = userDocs.data() as UserDetails
+        user.userId = userDocs.id
     } catch (error) {
         console.error(error)
         if (error) {
@@ -83,4 +86,23 @@ export async function getUserInOrg(orgName: string, userId: string) {
         return ""
     }
     return user;
+}
+
+export async function getOrgUsers(orgId:string) : Promise<Array<UserDetails> | string > {
+    let users : string | Array<UserDetails> = []
+    try {
+        const userDocs = await getDocs(collection(db, COLLECTiON_ORGS, orgId, COLLECTiON_USERS));
+        for (const user of userDocs.docs) {
+            const userData: UserDetails = user.data() as UserDetails
+            userData.userId = user.id
+            users.push(userData)
+        }
+    } catch (error) {
+        console.error(error)
+        if (error) {
+            return error.toString()
+        }
+        return "Error getting users"
+    }
+    return users
 }

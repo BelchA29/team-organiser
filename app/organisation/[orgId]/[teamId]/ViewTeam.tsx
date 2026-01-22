@@ -3,10 +3,13 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, Text, FlatList, Modal, Pressable } from 'react-native';
 import {styles} from '@/app/styles/global';
 import { useFocusEffect } from '@react-navigation/native';
-import {auth, db} from '@/app//src/firebaseConfig';
+import {auth} from '@/app//src/firebaseConfig';
 import { GetCreateEvent, GetEventView } from '@/app/services/routes';
-import { getEvents, getOrgUsers, getTeamUsers, getTeam } from '@/app/services/firebaseData';
 import Button from '@/components/Button'
+import { addMemberToTeam, getTeam, getTeamMembers } from '@/app/services/firebaseData/teamData';
+import { getAllEvents } from '@/app/services/firebaseData/eventsData';
+import { getOrgUsers } from '@/app/services/firebaseData/organisationData';
+import { getUser } from '@/app/services/firebaseData/userData';
 
 function TeamScreen() {
     const [openModal, setOpenModal] = React.useState(false);
@@ -17,6 +20,10 @@ function TeamScreen() {
     const [eventList, setEventList] = React.useState<Array<EventDetails>>([])
     const [teamCreator, setTeamCreator] = React.useState("")
     const [viewingCurrent, setViewCurrent] = React.useState(true)
+    const [errorFlag, setErrorFlag] = React.useState(true)
+    const [modalErrorFlag, setModalErrorFlag] = React.useState(true)
+    const [errorMessage, setErrorMessage] = React.useState("")
+    const [modalErrorMessage, setModalErrorMessage] = React.useState("")
 
     const router = useRouter();
 
@@ -37,47 +44,52 @@ function TeamScreen() {
         if (typeof orgId !== "string" || typeof teamId !== "string") {
             return
         }
-        try {
-            const teamDetails =  await getTeam(orgId, teamId)
-            setTeamCreator(teamDetails.creator)
-        } catch (e) {
-            console.error("Error getting team details")
-            console.error(e)
+        const teamDetails = await getTeam(orgId, teamId);
+        if (typeof teamDetails == "string") {
+            setErrorFlag(true);
+            setErrorMessage(teamDetails);
+            setLoading(false);
+            return;
         }
+        setTeamCreator(teamDetails.creator)
     }
 
 
     async function getCurrentEvents() {
         setLoading(true)
-        let events = []
         if (typeof orgId !== "string" || typeof teamId !== "string") {
             return
         }
-        try {
-            events = await getEvents(orgId, teamId)
-        } catch (e) {
-            console.error("Unable to get events")
-            return
+        const events = await getAllEvents(orgId, teamId);
+        if (typeof events == "string") {
+            setErrorFlag(true)
+            setErrorMessage(events)
+            setLoading(false);
+            return;
         }
         setEventList(events.filter((event) => event.date >= (new Date()).getTime()))
         setViewCurrent(true)
+        setErrorFlag(false)
+        setErrorMessage("")
         setLoading(false)
     }
 
     async function getPastEvents() {
         setLoading(true)
-        let events = []
         if (typeof orgId !== "string" || typeof teamId !== "string") {
             return
         }
-        try {
-            events = await getEvents(orgId, teamId)
-        } catch (e) {
-            console.error("Unable to get events")
-            return
+        const events = await getAllEvents(orgId, teamId);
+        if (typeof events == "string") {
+            setErrorFlag(true)
+            setErrorMessage(events)
+            setLoading(false);
+            return;
         }
         setEventList(events.filter((event) => event.date < (new Date()).getTime()))
         setViewCurrent(false)
+        setErrorFlag(false)
+        setErrorMessage("")
         setLoading(false)
     }
 
@@ -89,12 +101,23 @@ function TeamScreen() {
             setOpenModal(false)
             return
         }
-        const [orgMembers, teamMembers] = await Promise.all([getOrgUsers(orgId), getTeamUsers(orgId, teamId)])
-        console.log(orgMembers)
-        console.log(teamMembers)
-        console.log(orgMembers.filter((user) => !teamMembers.some((member) => user.userId === member.userId)))
+        const [orgMembers, teamMembers] = await Promise.all([getOrgUsers(orgId), getTeamMembers(orgId, teamId)]);
+        if (typeof orgMembers == "string") {
+            setModalErrorFlag(true);
+            setModalErrorMessage(orgMembers);
+            setModalLoading(false);
+            return;
+        }
+        if (typeof teamMembers == "string") {
+            setModalErrorFlag(true);
+            setModalErrorMessage(teamMembers)
+            setModalLoading(false)
+            return;
+        }
         setUserList(orgMembers.filter((user) => !teamMembers.some((member) => user.userId === member.userId)))
         setModalLoading(false)
+        setModalErrorFlag(false)
+        setModalErrorMessage("")
     }
 
     async function addNewMembers() {
@@ -103,21 +126,23 @@ function TeamScreen() {
             console.error("Create Event: Invalid Id")
             return
         }
-        try {
-            const teamDocs = db.collection("organisations").doc(orgId).collection("teams").doc(teamId)
-            await teamDocs.get()
-            for (const memeber of selectedList){
-                const userDoc = await db.collection("users").doc(currentUser?.uid).get()
-                const userName = userDoc.data() as UserDetails
-                const addingMembers = await teamDocs.collection("members").doc(memeber).set({
-                    displayName: userName.displayName
-                })
-            } 
-            setOpenModal(false)      
-        } catch (e){
-            console.error("Get team members error")
-            console.error(e)
-        }
+        for (const memeber of selectedList){
+            const userDoc = await getUser(memeber);
+            if (typeof userDoc == "string") {
+                setErrorFlag(true)
+                setErrorMessage(userDoc)
+                setModalLoading(false)
+                return
+            }
+            const addingMembers = await addMemberToTeam(orgId, teamId, memeber, {displayName: userDoc.displayName})
+            if (typeof addingMembers == "string") {
+                setErrorFlag(true)
+                setErrorMessage(addingMembers)
+                setModalLoading(false)
+                return;
+            }
+        } 
+        setOpenModal(false)      
         setModalLoading(false)
     }
 
@@ -127,12 +152,18 @@ function TeamScreen() {
         return (
             <View>
                 <Pressable 
-                    onPress={() =>setSelectedList(prev => {
-                    const next = new Set(prev)
-                    next.has(item.userId) ? next.delete(item.userId) : next.add(item.userId)
-                    return next
-                        })
-                    } 
+                    onPress={() =>{
+                        console.log("")
+                        console.log(selectedList)
+                        setSelectedList(prev => {
+                            const next = new Set(prev)
+                            next.has(item.userId) ? next.delete(item.userId) : next.add(item.userId)
+                            return next
+                                })
+                        console.log(selectedList)
+                        console.debug("")
+                            }
+                         }
                     style={isSelected ? styles.item: styles.listItemNotSelected}>
                     <Text>{item.displayName}</Text>
                 </Pressable>
@@ -149,6 +180,14 @@ function TeamScreen() {
             </View>
         )
     }
+    if (errorFlag) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.errorText}>{errorMessage}</Text>
+                <Button onPress={router.back} label='Back' />
+            </View>
+        )
+    }
     return (
         <View style={styles.container}>
             <Text style={styles.buttonText}>{teamId}</Text>
@@ -160,6 +199,7 @@ function TeamScreen() {
                     <Button onPress={getPastEvents} label={"Past Events"} style={viewingCurrent ? null : styles.buttonInverted }/>
                 </View>
             </View>
+            <Text style={[styles.headerText, {color:"#FFF"}]}>{viewingCurrent ? "Current Events" : "Past Events"}</Text>
             <FlatList data={eventList} style={styles.itemList}
             renderItem={({item}) => 
                 <View style={styles.item}>
@@ -170,7 +210,14 @@ function TeamScreen() {
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalFlatlistContent}>
                         {
-                        modalLoading ? <Text>Loading...</Text> : <View style={{flex: 1}}>
+                        modalLoading ? <Text>Loading...</Text> : 
+                        modalErrorFlag ? 
+                        <View>
+                            <Text style={styles.errorText}>{modalErrorMessage}</Text>
+                            <Button onPress={() => setOpenModal(false)} label={'Close'}/>
+                        </View>
+                        :
+                        <View style={{flex: 1}}>
                             <Text style={styles.headerText}>Select Members To Add</Text>
                             <FlatList data = {userList} style={styles.itemList} 
                                 renderItem={({item}) => getUserName(item)}

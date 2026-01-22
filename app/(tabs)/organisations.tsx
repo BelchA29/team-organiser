@@ -7,7 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import {auth} from '../src/firebaseConfig';
 import { GetOrganisation } from '@/app/services/routes';
 import { addUserToOrg, getAllOrgs, getOrg, getUserInOrg } from '../services/firebaseData/organisationData';
-import { getCurrentUser } from '../services/firebaseData/userData';
+import { getUser } from '../services/firebaseData/userData';
 
 function organisations() {
     const [organisations, setOrganisations] = React.useState<Organisation[]>([]);
@@ -28,6 +28,7 @@ function organisations() {
     }, []))
 
     async function getOrganisations() {
+        console.log("Getting orgs")
         setLoading(true)
         const allOrgs = await getAllOrgs();
         if (typeof allOrgs == "string") {
@@ -50,8 +51,15 @@ function organisations() {
 
     async function handleJoin() {
         setLoading(true)
+        const user = auth.currentUser
+        if (!user) {
+            setErrorFlag(true);
+            setErrorMessage("No authenticated user")
+            setLoading(false)
+            return;
+        }
 
-        const [org, userDetails] = await Promise.all([getOrg(joinCode), getCurrentUser()]);
+        const [org, userDetails] = await Promise.all([getOrg(joinCode), getUser(user.uid)]);
         if (!org || typeof org == "string") {
             setErrorFlag(true);
             setErrorMessage("Error finding organisation");

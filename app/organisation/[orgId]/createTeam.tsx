@@ -1,14 +1,16 @@
 import React from 'react';
 import {useLocalSearchParams, useRouter} from "expo-router";
 import { TextInput, View, Button, Text } from 'react-native';
-import { auth, db } from "@/app//src/firebaseConfig";
+import { auth } from "@/app//src/firebaseConfig";
 import {styles} from "@/app/styles/global";
+import { getTeam, setTeam } from '@/app/services/firebaseData/teamData';
 
 function CreateTeamScreen() {
     const [teamName, setTeamName] = React.useState("")
     const [minTeamMembers, setMinTeamMembers] = React.useState("")
     const [maxTeamMembers, setMaxTeamMembers] = React.useState("")
     const [errorMessage, setErrorMessage] = React.useState("")
+    const [errorFlag, setErrorFlag] = React.useState(false)
     const [isLoading, setLoading] = React.useState(false)
 
     const router = useRouter()
@@ -19,35 +21,43 @@ function CreateTeamScreen() {
 
     async function handleCreateTeam() {
         setLoading(true)
-
-        if (typeof orgId !== 'string') {
-            setLoading(false)
-            setErrorMessage("No such organisation")
+        if (!currentUser) {
+            setErrorFlag(true);
+            setErrorMessage("No authenticated user");
+            setLoading(false);
             return;
         }
-        try 
-        { const orgRef = db.collection("organisations").doc(orgId).collection("teams").doc(teamName)
-            const teams = await orgRef.get()
-            if (teams.exists()) {
-                setErrorMessage("Team already exists")
-                return
-            }
-            await orgRef.set( {
-                name: teamName,
-                creator: currentUser?.uid,
-                minTeamMembers: minTeamMembers,
-                maxTeamMembers: maxTeamMembers
-            })
-            router.replace(`/organisation/${orgId}/${teamName}/ViewTeam`)
-            setLoading(false)
-            setErrorMessage("")
-        } catch (error) {
-            if (error instanceof Error) {
-                setErrorMessage(error.message)
-                setLoading(false)
-            }
-            console.error(error);
+
+        if (typeof orgId !== 'string') {
+            setLoading(false);
+            setErrorMessage("No such organisation");
+            return;
         }
+
+        const currentTeam = await getTeam(orgId, teamName);
+        if (typeof currentTeam != "string") {
+            setErrorFlag(false);
+            setErrorMessage("Team already exists");
+            setLoading(false);
+            return;
+        }
+        const teamData: Team = {
+            name: teamName,
+            creator: currentUser.uid,
+            minTeamMembers: Number(minTeamMembers),
+            maxTeamMembers: Number(maxTeamMembers)
+        }
+        const newTeam = setTeam(orgId, teamName, teamData)
+        if (typeof newTeam == "string") {
+            setErrorFlag(true);
+            setErrorMessage(newTeam);
+            setLoading(false);
+            return;
+        }
+        router.replace(`/organisation/${orgId}/${teamName}/ViewTeam`)
+        setLoading(false)
+        setErrorMessage("")
+        setErrorFlag(false)
     }
 
     if (isLoading) {
@@ -59,32 +69,40 @@ function CreateTeamScreen() {
             </View>
         )
     } else {
-        return (
-        <View style = {styles.container}>
-            <Text></Text>
-            <TextInput 
-                style={styles.textInput}
-                onChangeText={setTeamName}
-                value={teamName}
-                placeholder='Team Name'
-            />
-            <TextInput 
-                style={styles.textInput}
-                keyboardType='numeric'
-                onChangeText={setMinTeamMembers}
-                value={minTeamMembers}
-                placeholder='Min Team members'
-            /> 
-            <TextInput 
-                style={styles.textInput}
-                keyboardType='numeric'
-                onChangeText={setMaxTeamMembers}
-                value={maxTeamMembers}
-                placeholder='Max Team members'
-            />
-            <Button title="Add" onPress={handleCreateTeam}/>
-        </View>
-        )
+        if (errorFlag) {
+            return (
+                <View style={styles.container}>
+                    <Text>Error: {errorMessage}</Text>
+                </View>
+            )
+        } else {
+            return (
+            <View style = {styles.container}>
+                <Text></Text>
+                <TextInput 
+                    style={styles.textInput}
+                    onChangeText={setTeamName}
+                    value={teamName}
+                    placeholder='Team Name'
+                />
+                <TextInput 
+                    style={styles.textInput}
+                    keyboardType='numeric'
+                    onChangeText={setMinTeamMembers}
+                    value={minTeamMembers}
+                    placeholder='Min Team members'
+                /> 
+                <TextInput 
+                    style={styles.textInput}
+                    keyboardType='numeric'
+                    onChangeText={setMaxTeamMembers}
+                    value={maxTeamMembers}
+                    placeholder='Max Team members'
+                />
+                <Button title="Add" onPress={handleCreateTeam}/>
+            </View>
+            )
+        }
     }
 
 }
