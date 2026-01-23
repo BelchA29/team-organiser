@@ -55,9 +55,9 @@ export async function setEvent(orgId:string, teamName: string, eventData:EventDe
     }
 }
 
-export async function addUserToEvent(orgId:string, teamId: string, eventId: string, userData: UserEventStatus) {
+export async function addUserToEvent(orgId:string, teamId: string, eventId: string, userId: string, userData: UserEventStatus) {
     try {
-        await setDoc(doc(db, COLLECTiON_ORGS, orgId, COLLECTiON_TEAMS, teamId, COLLECTiON_EVENTS, eventId, COLLECTiON_MEMEBERS, eventId), userData)
+        await setDoc(doc(db, COLLECTiON_ORGS, orgId, COLLECTiON_TEAMS, teamId, COLLECTiON_EVENTS, eventId, COLLECTiON_MEMEBERS, userId), userData)
     } catch (error) {
         console.error(error)
         if (error) {
@@ -87,6 +87,10 @@ export async function getEventMembers(orgId:string, teamId:string, eventId: stri
 }
 
 export async function updateEventMemberStatus(orgId:string, teamId: string, eventId: string, userId:string, userUpdates : object) {
+    const eventDoc = await getEvent(orgId, teamId, eventId);
+    if (typeof eventDoc == "string") {
+        return "Error finding event"
+    }
     try {
         await updateDoc(doc(db, COLLECTiON_ORGS, orgId, COLLECTiON_TEAMS, teamId, COLLECTiON_EVENTS, eventId, COLLECTiON_USERS, userId), userUpdates)
     } catch (error) {

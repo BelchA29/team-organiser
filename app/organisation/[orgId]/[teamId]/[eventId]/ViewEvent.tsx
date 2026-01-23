@@ -99,14 +99,14 @@ function EventScreen() {
             console.error("Add new member: Invalid Id")
             return
         }
-        for (const memeber of selectedList){
+        for (const member of selectedList){
             const memberData = {
-                id: memeber.userId,
-                displayName: memeber.displayName,
+                id: member.userId,
+                displayName: member.displayName,
                 response: null,
                 note: ""
             }
-            const addingMembers = await addUserToEvent(orgId, teamId, eventId, memberData)
+            const addingMembers = await addUserToEvent(orgId, teamId, eventId, member.userId, memberData)
         } 
         setOpenModal(false)      
         setModalLoading(false)
@@ -151,16 +151,7 @@ function EventScreen() {
             setLoading(false)
             return
         }
-        const updatedMember = members.map((user) => { 
-        if (user.id == currentUser.uid) {
-            user.response = result
-        }
-        return user
-        })
-        setMembers(updatedMember)
-        setLoading(false)
-        setErrorFlag(false)
-        setErrorMessage("")
+        await getEventDetails();
         setOpenAddNote(false)
         setDisableInOut(false)
     }

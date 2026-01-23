@@ -50,7 +50,7 @@ function CreateEventScreen() {
             return
         }
         teamMembers.map((user) => {
-            const result = addUserToEvent(orgId, teamId, newEvent.id, {
+            const result = addUserToEvent(orgId, teamId, newEvent.id, user.userId, {
                 id: user.userId,
                 displayName: user.displayName,
                 response: null,
