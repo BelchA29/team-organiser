@@ -9,6 +9,7 @@ import IconButton from '@/components/IconButton';
 import Button from '@/components/Button';
 import { addUserToEvent, getEvent, getEventMembers, updateEventMemberStatus } from '@/app/services/firebaseData/eventsData';
 import { getOrgUsers } from '@/app/services/firebaseData/organisationData';
+import { onAuthStateChanged } from 'firebase/auth';
 
 function EventScreen() {
     const [openModal, setOpenModal] = React.useState(false);
@@ -37,17 +38,21 @@ function EventScreen() {
     const eventId = params.eventId
     const currentUser = auth.currentUser
 
-    useFocusEffect(React.useCallback(() => {
-        if (!currentUser) {
-            router.replace('../RegisterScreen');
-        }
-        getEventDetails();
-    }, []))
+        React.useEffect(() => {
+            const unsubscribe = onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                router.replace("/login");
+                return;
+                }
+    
+                await user.getIdToken(true)
+                await getEventDetails()
+        });
+        return unsubscribe
+    }, []);
 
     async function getEventDetails() {
         setLoading(true)
-        console.debug(orgId)
-        console.debug(teamId)
         if (typeof orgId != "string" ||  typeof teamId != "string" || typeof eventId != "string") {
             console.error("Get Event: Invalid Id")
             return

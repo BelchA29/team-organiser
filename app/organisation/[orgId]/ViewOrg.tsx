@@ -2,10 +2,11 @@ import { styles } from "@/app/styles/global";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import React from "react";
 import { View, Text, FlatList } from "react-native";
-import {auth} from "../../src/firebaseConfig"
+import {auth} from "@/app/src/firebaseConfig"
 import { GetCreateTeam, GetViewTeam } from "@/app/services/routes";
 import { getOrg } from "@/app/services/firebaseData/organisationData";
 import { getAllTeams } from "@/app/services/firebaseData/teamData";
+import { onAuthStateChanged } from "firebase/auth";
 
 function OrganisationScreen() {
     const [loading, setLoading] = React.useState(false);
@@ -20,9 +21,19 @@ function OrganisationScreen() {
     const params = useLocalSearchParams();
     const orgId = params.orgId
     
-    React.useEffect(() => {
-        getOrganisation();
-    }, [])
+        React.useEffect(() => {
+            const unsubscribe = onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                router.replace("/login");
+                return;
+                }
+    
+                await user.getIdToken(true)
+                getOrganisation()
+            });
+    
+        return unsubscribe;
+        }, []);
 
     async function getOrganisation() {
         setLoading(true)

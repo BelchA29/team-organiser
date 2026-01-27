@@ -21,7 +21,7 @@ export default function login() {
                 router.replace("/");
             }).catch((error) => {
                 if (error instanceof FirebaseError) {
-                    console.error(error.code)
+                    console.error("Login error: ", error.code)
                     switch (error.code) {
                         case "auth/invalid-credential":
                             setErrorMessage("Invalid email or password");
@@ -83,6 +83,7 @@ export default function login() {
                 <Button title="Don't have an account? Register"
                 onPress={() => router.push('/RegisterScreen')}
                 color="grey"
+                disabled={loading}
                 />
             </View>
         </View>

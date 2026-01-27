@@ -1,36 +1,56 @@
 import React from 'react';
 import {useRouter} from "expo-router";
-import { TextInput, View, StyleSheet, Button, Alert, Text } from 'react-native';
-import { auth } from "../src/firebaseConfig";
-import {styles} from "../styles/global";
+import { TextInput, View, Button, Text } from 'react-native';
+import { auth } from "@/app/src/firebaseConfig";
+import {styles} from "@/app/styles/global";
 import { addUserToOrg, getOrg, setOrg } from '@/app/services/firebaseData/organisationData';
-import { getUser } from '../services/firebaseData/userData';
+import { getUser } from '@/app/services/firebaseData/userData';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 function CreateOrganisationScreen() {
     const [orgName, setOrgName] = React.useState("");
     const [error, setError] = React.useState("")
+    const [currentUser, setCurrentUser] = React.useState<User | null>(null)
     const router = useRouter();
 
+    React.useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+            router.replace("/login");
+            return;
+            }
+
+            await user.getIdToken(true)
+            setCurrentUser(user)
+    });
+
+    return unsubscribe;
+    }, []);
+
     const handleCreateOrganisation = async () => {
-        const user = auth.currentUser
-        if (!user) {
+        if (!currentUser) {
             setError("No authenticated user");
             return;
         }
-        const orgDoc = await getOrg(orgName)
-        if (orgDoc) {
+        const orgDoc = await getOrg(orgName);
+        console.log(orgDoc)
+        if (typeof orgDoc != "string") {
             setError("This name is already in use")
             return
         } 
-        const newOrg = setOrg(orgName)
+        if (orgDoc != "No Organisation") {
+            setError(orgDoc)
+            return
+        }
+        const newOrg = await setOrg(orgName);
+        console.log(newOrg);
         if (typeof newOrg == 'string') {
             setError(newOrg)
             return
         }
         
-        const userDetails = await getUser(user.uid)
+        const userDetails = await getUser(currentUser.uid);
         if (typeof userDetails == "string") {
-            console.error(userDetails)
             setError(userDetails)
             return 
         }
@@ -52,7 +72,7 @@ function CreateOrganisationScreen() {
                 value={orgName}
                 placeholder='Club Name'
             />
-            <Text>{error}</Text>
+            <Text style={styles.errorText}>{error}</Text>
             <Button title="Create" onPress={handleCreateOrganisation}/>
         </View>
     )

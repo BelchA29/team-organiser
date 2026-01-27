@@ -1,7 +1,7 @@
 import { COLLECTiON_USERS } from '@/app/src/constants';
 import {auth, db} from '@/app/src/firebaseConfig';
 import { FirebaseError } from '@firebase/util';
-import { setDoc, doc } from '@react-native-firebase/firestore';
+import { setDoc, doc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, User } from "firebase/auth";
 
 

@@ -10,6 +10,7 @@ import { addMemberToTeam, getTeam, getTeamMembers } from '@/app/services/firebas
 import { getAllEvents } from '@/app/services/firebaseData/eventsData';
 import { getOrgUsers } from '@/app/services/firebaseData/organisationData';
 import { getUser } from '@/app/services/firebaseData/userData';
+import { onAuthStateChanged } from 'firebase/auth';
 
 function TeamScreen() {
     const [openModal, setOpenModal] = React.useState(false);
@@ -31,14 +32,20 @@ function TeamScreen() {
     const teamId = params.teamId
     const orgId = params.orgId
     const currentUser = auth.currentUser
+    
+    React.useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+            router.replace("/login");
+            return;
+            }
 
-    useFocusEffect(React.useCallback(() => {
-        if (!currentUser) {
-            router.replace('../RegisterScreen');
-        }
-        getCurrentEvents();
-        getTeamDetails()
-    }, []))
+            await user.getIdToken(true)
+            getCurrentEvents();
+            getTeamDetails()
+        });
+        return unsubscribe
+    }, []);
 
     async function getTeamDetails() {
         if (typeof orgId !== "string" || typeof teamId !== "string") {

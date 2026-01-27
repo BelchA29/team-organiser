@@ -11,9 +11,9 @@ function ProfileScreen(){
         try {
             await signOut(auth);
             Alert.alert('Logged out')
-            router.replace('/')
+            // router.replace('/')
         } catch (error) {
-            console.error(error)
+            console.error("Sign Out Error: ", error)
         }
     }
 

@@ -5,6 +5,8 @@ import {styles} from '@/app/styles/global';
 import {DateTimePickerAndroid, DateTimePickerEvent} from '@react-native-community/datetimepicker'
 import { addUserToEvent, setEvent } from '@/app/services/firebaseData/eventsData';
 import { getTeamMembers } from '@/app/services/firebaseData/teamData';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/app/src/firebaseConfig';
 
 function CreateEventScreen() {
     const [eventTitle, setEventTitle] = React.useState("");
@@ -20,10 +22,20 @@ function CreateEventScreen() {
     const teamId = params.teamId
     const orgId = params.orgId
 
+    React.useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+            router.replace("/login");
+            return;
+            }
+
+            await user.getIdToken(true)
+        });
+        return unsubscribe
+    }, []);
+
     async function createEvent() {
         setIsLoading(true)
-        console.debug(orgId)
-        console.debug(teamId)
         if (typeof orgId != "string" ||  typeof teamId != "string") {
             console.error("Create Event: Invalid Id")
             return

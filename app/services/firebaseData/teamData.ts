@@ -1,6 +1,6 @@
 import { COLLECTiON_MEMEBERS, COLLECTiON_ORGS, COLLECTiON_TEAMS } from '@/app/src/constants';
 import {auth, db} from '@/app/src/firebaseConfig';
-import { setDoc, doc, getDoc, collection, getDocs } from '@react-native-firebase/firestore';
+import { setDoc, doc, getDoc, collection, getDocs } from '@firebase/firestore';
 
 export async function getAllTeams(orgId:string) {
     const teams = []

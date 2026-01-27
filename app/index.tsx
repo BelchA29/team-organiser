@@ -13,7 +13,7 @@ export default function Index() {
     setLoading(true)
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        router.replace("./(tabs)/organisations")
+        router.replace("/(tabs)/organisations")
       } else {
         setLoading(false)
       }

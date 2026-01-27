@@ -4,6 +4,7 @@ import { TextInput, View, Button, Text } from 'react-native';
 import { auth } from "@/app//src/firebaseConfig";
 import {styles} from "@/app/styles/global";
 import { getTeam, setTeam } from '@/app/services/firebaseData/teamData';
+import { onAuthStateChanged } from 'firebase/auth';
 
 function CreateTeamScreen() {
     const [teamName, setTeamName] = React.useState("")
@@ -18,6 +19,18 @@ function CreateTeamScreen() {
 
     const params = useLocalSearchParams()
     const orgId = params.orgId
+
+    React.useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+            router.replace("/login");
+            return;
+            }
+
+            await user.getIdToken(true)
+        });
+    return unsubscribe;
+    }, []);
 
     async function handleCreateTeam() {
         setLoading(true)

@@ -1,6 +1,7 @@
 import { COLLECTiON_ORGS, COLLECTiON_USERS } from '@/app/src/constants';
-import {auth, db} from '@/app/src/firebaseConfig';
-import { setDoc, doc, getDoc } from '@react-native-firebase/firestore';
+import {db} from '@/app/src/firebaseConfig';
+import { setDoc, doc, getDoc } from '@firebase/firestore';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 export async function getUser(userId: string) : Promise <UserDetails | string> {
     let userDetails : UserDetails;

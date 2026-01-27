@@ -1,7 +1,7 @@
 import { COLLECTiON_ORGS, COLLECTiON_USERS } from '@/app/src/constants';
 import {auth, db} from '@/app/src/firebaseConfig';
-import { setDoc, doc, getDoc, collection, getDocs } from '@react-native-firebase/firestore';
-
+import { getAuth } from 'firebase/auth';
+import { setDoc, doc, getDoc, collection, getDocs } from 'firebase/firestore';
 
 export async function getAllOrgs() {
     let orgs = []
@@ -12,7 +12,7 @@ export async function getAllOrgs() {
             orgs.push(orgData)
         }
     } catch (error) {
-        console.error(error)
+        console.error("Get All Orgs Error: ",error)
         if (error) {
             return error.toString()
         }
@@ -29,7 +29,7 @@ export async function getOrg(orgName: string) {
             organisation = orgDocs.data() as Organisation
         }
     } catch (error) {
-        console.error(error)
+        console.error(`Get Org ${orgName} Error: `, error)
     }
     return organisation;
 }
@@ -43,7 +43,7 @@ export async function setOrg(orgName: string) {
             creator: user.uid,
         })
     } catch (error) {
-        console.error(error)
+        console.error("Set Org Error: ", error)
         return "Error creating organisation, try again";
     }
 }
@@ -58,14 +58,22 @@ export async function addUserToOrg(orgName:string, userName:string) {
     try {
         organisation = await getDoc(doc(db, COLLECTiON_ORGS, orgName))
     } catch (error) {
-        console.error(error)
+        console.error("Add User to Org Error: Get Org - ", error)
         return "Organisation Error"
     }
 
     if (organisation) {
-        await setDoc(doc(db, COLLECTiON_ORGS, orgName, COLLECTiON_USERS, user.uid), {
-            displayName: userName
-        })
+        try {
+            await setDoc(doc(db, COLLECTiON_ORGS, orgName, COLLECTiON_USERS, user.uid), {
+                displayName: userName
+            }) 
+        } catch (error) {
+            console.error("Add User to Org Error: Add User - ", error)
+            if (error) {
+                return error.toString()
+            }
+            return "Error adding user to org"
+        }
     }
 }
 
@@ -79,7 +87,7 @@ export async function getUserInOrg(orgName: string, userId: string) {
         user = userDocs.data() as UserDetails
         user.userId = userDocs.id
     } catch (error) {
-        console.error(error)
+        console.error("Get Org User Error: ", error)
         if (error) {
             return error.toString()
         }
@@ -96,9 +104,9 @@ export async function getOrgUsers(orgId:string) : Promise<Array<UserDetails> | s
             const userData: UserDetails = user.data() as UserDetails
             userData.userId = user.id
             users.push(userData)
-        }
+        } 
     } catch (error) {
-        console.error(error)
+        console.error("Get org Users Error: ", error)
         if (error) {
             return error.toString()
         }
