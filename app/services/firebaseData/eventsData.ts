@@ -92,7 +92,7 @@ export async function updateEventMemberStatus(orgId:string, teamId: string, even
         return "Error finding event"
     }
     try {
-        await updateDoc(doc(db, COLLECTiON_ORGS, orgId, COLLECTiON_TEAMS, teamId, COLLECTiON_EVENTS, eventId, COLLECTiON_USERS, userId), userUpdates)
+        await updateDoc(doc(db, COLLECTiON_ORGS, orgId, COLLECTiON_TEAMS, teamId, COLLECTiON_EVENTS, eventId, COLLECTiON_MEMEBERS, userId), userUpdates)
     } catch (error) {
         console.error("Update Member Status Error: ", error)
         if (error) {

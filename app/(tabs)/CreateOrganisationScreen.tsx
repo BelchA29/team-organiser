@@ -33,7 +33,6 @@ function CreateOrganisationScreen() {
             return;
         }
         const orgDoc = await getOrg(orgName);
-        console.log(orgDoc)
         if (typeof orgDoc != "string") {
             setError("This name is already in use")
             return
@@ -43,7 +42,6 @@ function CreateOrganisationScreen() {
             return
         }
         const newOrg = await setOrg(orgName);
-        console.log(newOrg);
         if (typeof newOrg == 'string') {
             setError(newOrg)
             return

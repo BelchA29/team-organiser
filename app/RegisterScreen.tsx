@@ -32,7 +32,7 @@ function RegisterScreen() {
         }
 
         Alert.alert("Success", `Welcome, ${firstName} ${lastName}`);
-        router.replace('./(tabs)/organisations');
+        router.replace('/');
         setLoading(false)
     }
 
