@@ -70,6 +70,11 @@ export const styles = StyleSheet.create({
         marginVertical: 8,
         marginHorizontal: 16,
     },
+    pickerDisplay: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 5,
+        marginVertical: 10
+    },
     modalOverlay: {
         flex:1,
         backgroundColor: 'rgba(0,0,0,0.4)',

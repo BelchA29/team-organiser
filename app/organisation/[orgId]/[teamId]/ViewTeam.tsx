@@ -20,6 +20,7 @@ function TeamScreen() {
     const [selectedList, setSelectedList] = React.useState(new Set<string>())
     const [eventList, setEventList] = React.useState<Array<EventDetails>>([])
     const [teamCreator, setTeamCreator] = React.useState("")
+    const [teamManager, setTeamManager] = React.useState("")
     const [viewingCurrent, setViewCurrent] = React.useState(true)
     const [errorFlag, setErrorFlag] = React.useState(true)
     const [modalErrorFlag, setModalErrorFlag] = React.useState(true)
@@ -58,7 +59,10 @@ function TeamScreen() {
             setLoading(false);
             return;
         }
-        setTeamCreator(teamDetails.creator)
+        setTeamCreator(teamDetails.creatorId)
+        if (teamDetails.managerId) {
+            setTeamManager(teamDetails.managerId)
+        }
     }
 
 
@@ -235,7 +239,7 @@ function TeamScreen() {
                 </View>
             </Modal>
             <View style={{flex:1}}/>
-            {currentUser?.uid === teamCreator ? <View style={{flexDirection: 'row', gap: 5}}>
+            {currentUser?.uid === teamCreator || currentUser?.uid === teamManager ? <View style={{flexDirection: 'row', gap: 5}}>
                 <View style={{flex: 1}}>
                     <Button onPress={addTeamMember} label='Add Team Member' />
                 </View>

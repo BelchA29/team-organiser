@@ -1,6 +1,7 @@
 type Team = {
     name: string,
-    creator: string,
+    creatorId: string,
+    managerId: string | null,
     maxTeamMembers: number,
-    minTeamMembers: number
+    minTeamMembers: number,
 }
